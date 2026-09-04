@@ -253,6 +253,11 @@
   .avail-daylabel{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:var(--ink-faint);text-align:center;padding:3px 0 5px;letter-spacing:.02em;}
   .avail-daylabel.today{color:var(--accent);}
   .avail-hourlabel{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--ink-faint);text-align:right;padding-right:6px;line-height:13px;font-variant-numeric:tabular-nums;}
+  @media (max-width:600px){
+    .avail-grid{grid-template-columns:22px repeat(7,minmax(0,1fr));min-width:0;gap:1px 1px;}
+    .avail-daylabel{font-size:8.5px;padding:2px 0 4px;letter-spacing:0;}
+    .avail-hourlabel{font-size:7px;padding-right:2px;}
+  }
   .avail-hourlabel.hourstart{color:var(--ink-dim);}
   .avail-cell{height:13px;border-radius:2px;background:var(--paper);border:1px solid var(--line);cursor:pointer;}
   .avail-cell,.avail-grid{-webkit-user-select:none;user-select:none;touch-action:pan-y;}
