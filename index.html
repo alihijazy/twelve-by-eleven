@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twelve by Eleven</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper:#eef1f5;
+    --paper-raised:#ffffff;
+    --ink:#14171f;
+    --ink-dim:#565f6e;
+    --ink-faint:#8891a0;
+    --line:#d7dce3;
+    --accent:#0a7f92;
+    --accent-ink:#ffffff;
+    --accent-wash:#e0f2f4;
+    --done:#2f7d4f;
+    --done-bg:#e2f1e7;
+    --booked:#a5711e;
+    --booked-bg:#f6ead4;
+    --open:#8a94a6;
+    --open-bg:#e7eaef;
+    --shadow:0 1px 2px rgba(20,23,31,0.06), 0 6px 20px rgba(20,23,31,0.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#11141b;
+      --paper-raised:#181c25;
+      --ink:#e9ebef;
+      --ink-dim:#9aa3b3;
+      --ink-faint:#697184;
+      --line:#2a303c;
+      --accent:#2fc0d1;
+      --accent-ink:#0a1116;
+      --accent-wash:rgba(47,192,209,0.12);
+      --done:#5cb885;
+      --done-bg:rgba(92,184,133,0.14);
+      --booked:#dba852;
+      --booked-bg:rgba(219,168,82,0.14);
+      --open:#6b7484;
+      --open-bg:rgba(107,116,132,0.14);
+      --shadow:0 1px 2px rgba(0,0,0,0.4), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#11141b;
+    --paper-raised:#181c25;
+    --ink:#e9ebef;
+    --ink-dim:#9aa3b3;
+    --ink-faint:#697184;
+    --line:#2a303c;
+    --accent:#2fc0d1;
+    --accent-ink:#0a1116;
+    --accent-wash:rgba(47,192,209,0.12);
+    --done:#5cb885;
+    --done-bg:rgba(92,184,133,0.14);
+    --booked:#dba852;
+    --booked-bg:rgba(219,168,82,0.14);
+    --open:#6b7484;
+    --open-bg:rgba(107,116,132,0.14);
+    --shadow:0 1px 2px rgba(0,0,0,0.4), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);}
+  .page{
+    max-width:1040px;margin:0 auto;padding:40px 24px 64px;
+    font-family:'Public Sans',system-ui,-apple-system,sans-serif;
+  }
+  h1,h2,.mono{font-family:'IBM Plex Mono',ui-monospace,'SFMono-Regular',monospace;}
+  h1,h2{text-wrap:balance;}
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  }
+  h1{font-size:38px;font-weight:700;margin:8px 0 12px;letter-spacing:-0.01em;}
+  .lede{font-size:16px;line-height:1.6;color:var(--ink-dim);max-width:62ch;margin:0 0 26px;}
+  .lede strong{color:var(--ink);font-weight:600;}
+
+  .meter-row{display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-bottom:6px;}
+  .meter{flex:1 1 260px;min-width:220px;}
+  .meter-top{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-dim);margin-bottom:6px;}
+  .meter-top .count{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .meter-track{height:8px;border-radius:5px;background:var(--open-bg);overflow:hidden;display:flex;}
+  .meter-fill-done{background:var(--done);height:100%;}
+  .meter-fill-booked{background:var(--booked);height:100%;}
+
+  .chip-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .chip{
+    display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-dim);
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:999px;
+    padding:6px 12px;box-shadow:var(--shadow);
+  }
+  .chip b{font-family:'IBM Plex Mono',monospace;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .dot.open{background:var(--open);}
+  .dot.booked{background:var(--booked);}
+  .dot.done{background:var(--done);}
+
+  .identity-bar{
+    margin:28px 0 22px;padding:12px 16px;border-radius:10px;
+    background:var(--accent-wash);border:1px solid var(--accent);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    font-size:14px;
+  }
+  .identity-bar strong{font-family:'IBM Plex Mono',monospace;}
+  .identity-bar button{
+    font:inherit;font-size:13px;font-weight:600;color:var(--accent);background:none;
+    border:1px solid var(--accent);border-radius:7px;padding:5px 11px;cursor:pointer;
+  }
+  .identity-bar button:hover{background:var(--accent);color:var(--accent-ink);}
+  .offline-note{
+    margin:0 0 22px;padding:10px 14px;border-radius:9px;font-size:13px;
+    background:var(--booked-bg);color:var(--booked);border:1px solid var(--booked);
+  }
+
+  .walkthrough{
+    margin:0 0 22px;padding:14px 18px;border-radius:12px;background:var(--paper-raised);
+    border:1px solid var(--line);box-shadow:var(--shadow);
+  }
+  .walkthrough-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .walkthrough-head span{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-dim);}
+  .walkthrough-head button{font-size:19px;line-height:1;background:none;border:none;color:var(--ink-faint);cursor:pointer;padding:0 4px;}
+  .walkthrough-head button:hover{color:var(--ink);}
+  .walkthrough-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .walkthrough-step{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink-dim);cursor:pointer;}
+  .walkthrough-step.done{color:var(--ink-faint);text-decoration:line-through;cursor:default;}
+  .walkthrough-mark{
+    width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--done);
+  }
+  .walkthrough-step.done .walkthrough-mark{border-color:var(--done);background:var(--done-bg);}
+
+  .layout{display:grid;grid-template-columns:1.05fr 1fr;gap:26px;align-items:start;}
+  @media (max-width:860px){.layout{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:16px;
+    padding:22px 24px 26px;box-shadow:var(--shadow);
+  }
+  .panel h2{font-size:15px;font-weight:600;letter-spacing:.02em;margin:0 0 4px;}
+  .panel .sub{font-size:13px;color:var(--ink-faint);margin:0 0 14px;}
+
+  #graph{width:100%;height:auto;display:block;}
+  .node-label{font-family:'Public Sans',sans-serif;font-size:12.5px;font-weight:600;fill:var(--ink);}
+  .node-clock{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--ink-faint);}
+  .node-dot{stroke:var(--paper-raised);stroke-width:3px;cursor:pointer;}
+  .edge{fill:none;stroke-linecap:round;}
+  .edge.open{stroke:var(--open);stroke-width:1.4;stroke-dasharray:1 4.5;opacity:.75;}
+  .edge.booked{stroke:var(--booked);stroke-width:2.2;}
+  .edge.done{stroke:var(--done);stroke-width:2.6;}
+  .edge-hit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer;}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--ink-dim);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{display:inline-block;width:16px;height:0;border-top-width:2.5px;border-top-style:solid;}
+  .legend i.open{border-color:var(--open);border-top-style:dashed;}
+  .legend i.booked{border-color:var(--booked);}
+  .legend i.done{border-color:var(--done);}
+
+  .picker p{margin:0 0 12px;font-size:14px;color:var(--ink-dim);}
+  .picker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+  .picker-grid button{
+    font:inherit;font-size:14px;font-weight:600;text-align:left;padding:11px 13px;
+    border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;
+  }
+  .picker-grid button:hover{border-color:var(--accent);color:var(--accent);}
+
+  .me-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+  .me-name{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;}
+  .me-head button{font:inherit;font-size:12.5px;color:var(--ink-faint);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
+  .me-head button:hover{color:var(--accent);}
+
+  .me-fields{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:8px;max-width:280px;}
+  .me-fields label{display:block;font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
+  .me-fields select,.me-fields input{
+    width:100%;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:7px;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink);
+  }
+  .me-fields select:focus,.me-fields input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .me-progress{font-size:13px;color:var(--ink-dim);margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--line);}
+  .me-progress b{color:var(--ink);font-family:'IBM Plex Mono',monospace;}
+
+  .call-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;}
+  .call-row{
+    display:flex;flex-direction:column;gap:8px;
+    padding:10px 12px;border-radius:9px;background:var(--paper);border:1px solid var(--line);
+  }
+  .call-top,.call-bottom{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .call-top{justify-content:space-between;}
+  .call-name{font-size:13.5px;font-weight:600;display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto;}
+  .call-name .call-tz{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .overlap-badge{
+    font:inherit;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+    border:1px solid var(--line);border-radius:999px;padding:5px 9px;cursor:pointer;white-space:nowrap;
+    background:var(--paper-raised);color:var(--ink-dim);flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  }
+  .overlap-badge:hover{border-color:var(--accent);color:var(--accent);}
+  .overlap-badge.has-overlap{border-color:var(--accent);color:var(--accent);background:var(--accent-wash);}
+  .overlap-badge.no-tz{color:var(--ink-faint);cursor:default;}
+  .status-pill{
+    font:inherit;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+    border:none;border-radius:6px;padding:6px 9px;cursor:pointer;white-space:nowrap;flex:none;
+  }
+  .status-pill.open{background:var(--open-bg);color:var(--open);}
+  .status-pill.booked{background:var(--booked-bg);color:var(--booked);}
+  .status-pill.done{background:var(--done-bg);color:var(--done);}
+  .call-date{
+    font:inherit;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-dim);
+    border:1px solid var(--line);border-radius:6px;padding:5px 6px;background:var(--paper-raised);
+    flex:1 1 170px;min-width:0;font-variant-numeric:tabular-nums;
+  }
+
+  .avail-panel{margin-top:26px;}
+  .compare-row{margin:14px 0 12px;display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap;}
+  .compare-row label{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink-dim);}
+  .compare-row select{font:inherit;font-size:13px;padding:6px 9px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
+  .week-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 10px;}
+  .week-nav button{
+    font:inherit;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;
+    background:var(--paper);color:var(--accent);border:1px solid var(--line);border-radius:7px;
+    padding:5px 11px;cursor:pointer;
+  }
+  .week-nav button:hover:not(:disabled){border-color:var(--accent);}
+  .week-nav button:disabled{color:var(--ink-faint);cursor:default;opacity:.5;}
+  .week-nav .week-label{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;color:var(--ink-dim);}
+
+  .preset-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 10px;}
+  .preset-label{font-size:11px;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.03em;margin-right:2px;}
+  .preset-row button{
+    font:inherit;font-size:12px;font-weight:600;color:var(--ink-dim);background:var(--paper);
+    border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap;
+  }
+  .preset-row button:hover{border-color:var(--accent);color:var(--accent);}
+  .preset-row button.preset-clear{color:var(--booked);}
+  .preset-row button.preset-clear:hover{border-color:var(--booked);}
+
+  .repeat-row{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap;}
+  .repeat-row button{
+    font:inherit;font-size:12.5px;font-weight:700;color:var(--accent-ink);background:var(--accent);
+    border:none;border-radius:7px;padding:8px 14px;cursor:pointer;
+  }
+  .repeat-row button:hover{opacity:.9;}
+  .repeat-feedback{font-size:12px;color:var(--done);font-weight:600;}
+  .avail-grid-wrap{overflow-x:auto;margin-top:4px;}
+  .avail-grid{display:grid;grid-template-columns:38px repeat(7,minmax(44px,1fr));gap:1px 2px;min-width:460px;}
+  .avail-daylabel{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:var(--ink-faint);text-align:center;padding:3px 0 5px;letter-spacing:.02em;}
+  .avail-daylabel.today{color:var(--accent);}
+  .avail-hourlabel{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--ink-faint);text-align:right;padding-right:6px;line-height:13px;font-variant-numeric:tabular-nums;}
+  .avail-hourlabel.hourstart{color:var(--ink-dim);}
+  .avail-cell{height:13px;border-radius:2px;background:var(--paper);border:1px solid var(--line);cursor:pointer;}
+  .avail-cell,.avail-grid{-webkit-user-select:none;user-select:none;touch-action:pan-y;}
+  .avail-cell.mine,.avail-cell.mine-only{background:var(--accent-wash);border-color:var(--accent);}
+  .avail-cell.theirs-only{background:transparent;border:1px dashed var(--ink-faint);}
+  .avail-cell.both{background:var(--accent);border-color:var(--accent);}
+  .avail-cell[data-hourstart="1"]{border-top-color:var(--ink-faint);}
+  .avail-legend{margin-top:12px;font-size:12px;color:var(--ink-dim);display:flex;gap:14px;flex-wrap:wrap;}
+  .avail-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .avail-legend i{width:13px;height:13px;border-radius:3px;display:inline-block;flex:none;}
+  .avail-legend i.mine{background:var(--accent-wash);border:1px solid var(--accent);}
+  .avail-legend i.theirs{background:transparent;border:1px dashed var(--ink-faint);}
+  .avail-legend i.both{background:var(--accent);}
+  .avail-note{font-style:italic;}
+
+  .suggest-list{margin-top:16px;}
+  .suggest-empty{font-size:13px;color:var(--ink-faint);font-style:italic;margin:0;}
+  .suggest-item{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:10px 12px;border-radius:9px;background:var(--accent-wash);border:1px solid var(--accent);
+    margin-bottom:8px;
+  }
+  .suggest-time{font-size:13.5px;font-weight:700;}
+  .suggest-their{font-size:11.5px;color:var(--ink-dim);margin-top:1px;}
+  .suggest-item button{
+    font:inherit;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;
+    background:var(--accent);color:var(--accent-ink);border:none;border-radius:6px;
+    padding:7px 12px;cursor:pointer;white-space:nowrap;flex:none;
+  }
+  .booked-card{display:block;}
+  .cal-links{margin-top:8px;font-size:11.5px;color:var(--ink-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .cal-links a{
+    font-weight:700;color:var(--accent);text-decoration:none;border:1px solid var(--accent);
+    border-radius:6px;padding:4px 9px;
+  }
+  .cal-links a:hover{background:var(--accent);color:var(--accent-ink);}
+
+  .howto{margin-top:34px;}
+  .howto h2{font-size:15px;font-weight:600;margin:0 0 12px;}
+  .howto ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--ink-dim);line-height:1.55;}
+  .howto strong{color:var(--ink);}
+
+  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .panel{transition:box-shadow .15s ease;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">Round Robin · 12 people</div>
+    <h1>Twelve by Eleven</h1>
+    <p class="lede">Every one of you meets every other person once, 30 minutes, in whatever time zones you're actually in. Twelve people means <strong>66 calls</strong> total &mdash; 11 per person. This page is the shared list of who's booked and who isn't, so nothing falls through.</p>
+
+    <div class="meter-row">
+      <div class="meter">
+        <div class="meter-top"><span>Group progress</span><span class="count" id="meterCount">0 / 66 done</span></div>
+        <div class="meter-track"><div class="meter-fill-done" id="fillDone" style="width:0%"></div><div class="meter-fill-booked" id="fillBooked" style="width:0%"></div></div>
+      </div>
+      <div class="chip-row">
+        <span class="chip"><span class="dot open"></span>Open <b id="chipOpen">66</b></span>
+        <span class="chip"><span class="dot booked"></span>Booked <b id="chipBooked">0</b></span>
+        <span class="chip"><span class="dot done"></span>Done <b id="chipDone">0</b></span>
+      </div>
+    </div>
+  </header>
+
+  <div id="offlineNote" class="offline-note" hidden>Live sync is unavailable right now &mdash; changes here won't be saved or shared until the connection to the shared database is back.</div>
+
+  <div class="identity-bar" id="identityBar"></div>
+
+  <div class="walkthrough" id="walkthrough" hidden>
+    <div class="walkthrough-head"><span>Getting set up</span><button id="walkthroughDismiss" type="button" aria-label="Dismiss">&times;</button></div>
+    <ol class="walkthrough-steps" id="walkthroughSteps"></ol>
+  </div>
+
+  <main class="layout">
+    <section class="panel">
+      <h2>The network</h2>
+      <p class="sub">12 people, fully connected &mdash; 66 edges, one per call. Click a name to set who you are; click an edge to update that pair.</p>
+      <svg id="graph" viewBox="0 0 560 560" role="img" aria-label="Network diagram of all 66 pairs"></svg>
+      <div class="legend">
+        <span><i class="open"></i>Not booked</span>
+        <span><i class="booked"></i>Booked</span>
+        <span><i class="done"></i>Done</span>
+      </div>
+    </section>
+
+    <section class="panel" id="personalPanel"></section>
+  </main>
+
+  <section class="panel avail-panel" id="availPanel" hidden>
+    <h2>When are you free?</h2>
+    <p class="sub">Paint your actual availability on real dates, in 30-minute blocks (matching the call length), in your own local time (or your browser's, until you set one above) &mdash; click a cell, or click and drag across several. It saves as you go. Browse up to 8 weeks ahead with the arrows.</p>
+    <div class="compare-row">
+      <label>Compare against <select id="compareSelect"><option value="">Just show mine</option></select></label>
+    </div>
+    <div class="week-nav">
+      <button id="weekPrev" type="button">&larr; Prev</button>
+      <span class="week-label" id="weekLabel"></span>
+      <button id="weekNext" type="button">Next &rarr;</button>
+    </div>
+    <div class="preset-row" id="presetRow">
+      <span class="preset-label">Quick fill this week</span>
+      <button type="button" data-preset="weekdayMornings">Weekday mornings</button>
+      <button type="button" data-preset="weekdayAfternoons">Weekday afternoons</button>
+      <button type="button" data-preset="evenings">Evenings</button>
+      <button type="button" data-preset="weekends">Weekends</button>
+      <button type="button" class="preset-clear" data-preset="clear">Clear week</button>
+    </div>
+    <div class="repeat-row">
+      <button type="button" id="repeatWeekBtn">Repeat this week for every future week &rarr;</button>
+      <span class="repeat-feedback" id="repeatFeedback"></span>
+    </div>
+    <div class="avail-grid-wrap"><div class="avail-grid" id="availGrid"></div></div>
+    <div class="avail-legend" id="availLegend"></div>
+    <div class="suggest-list" id="suggestList" hidden></div>
+  </section>
+
+  <footer class="howto">
+    <h2>How this works</h2>
+    <ol>
+      <li><strong>Pick your name</strong> below, then add your time zone &mdash; it saves automatically.</li>
+      <li><strong>Paint your real availability</strong> further down, on actual dates, in your own local time. Browse forward with the arrows to mark out several weeks.</li>
+      <li><strong>Compare against anyone</strong> on your list &mdash; their free hours convert into your time zone, and overlapping slots show up as "Times you're both free" with a one-click <strong>Book</strong> button. No outside scheduling tool needed.</li>
+      <li>Booking sets the pair to <strong>Booked</strong> with the exact time. Mark it <strong>Done</strong> once the call happens &mdash; either person can update a pair, since it's shared.</li>
+    </ol>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var NAMES = ["Nick B","Nico P","Will A","Ali H","Andrew T","Bob B","Chip B","Marc K","Matt C","Nick D","Spencer W","Harold"];
+  var N = NAMES.length;
+  var STORAGE_KEY = "twelveByEleven.me";
+
+  var TZ_OPTIONS = [
+    ["Pacific/Honolulu","Honolulu"],["America/Anchorage","Anchorage"],
+    ["America/Los_Angeles","Los Angeles"],["America/Vancouver","Vancouver"],
+    ["America/Denver","Denver"],["America/Phoenix","Phoenix"],
+    ["America/Chicago","Chicago"],["America/Mexico_City","Mexico City"],
+    ["America/New_York","New York"],["America/Toronto","Toronto"],
+    ["America/Halifax","Halifax"],["America/Sao_Paulo","Sao Paulo"],
+    ["America/Argentina/Buenos_Aires","Buenos Aires"],
+    ["Atlantic/Reykjavik","Reykjavik"],["Europe/London","London"],
+    ["Europe/Lisbon","Lisbon"],["Europe/Paris","Paris"],
+    ["Europe/Berlin","Berlin"],["Europe/Madrid","Madrid"],
+    ["Europe/Rome","Rome"],["Europe/Zurich","Zurich"],
+    ["Europe/Athens","Athens"],["Europe/Helsinki","Helsinki"],
+    ["Europe/Moscow","Moscow"],["Africa/Johannesburg","Johannesburg"],
+    ["Africa/Lagos","Lagos"],["Africa/Cairo","Cairo"],
+    ["Asia/Jerusalem","Jerusalem"],["Asia/Dubai","Dubai"],
+    ["Asia/Karachi","Karachi"],["Asia/Kolkata","Mumbai / Delhi"],
+    ["Asia/Dhaka","Dhaka"],["Asia/Bangkok","Bangkok"],
+    ["Asia/Singapore","Singapore"],["Asia/Shanghai","Shanghai / Beijing"],
+    ["Asia/Hong_Kong","Hong Kong"],["Asia/Tokyo","Tokyo"],
+    ["Asia/Seoul","Seoul"],["Australia/Perth","Perth"],
+    ["Australia/Sydney","Sydney"],["Pacific/Auckland","Auckland"]
+  ];
+
+  var pairs = []; // {i,j,key}
+  for (var i=0;i<N;i++) for (var j=i+1;j<N;j++) pairs.push({i:i,j:j,key:i+"-"+j});
+
+  function pairKey(i,j){ return i<j ? (i+"-"+j) : (j+"-"+i); }
+
+  var pairState = {};   // key -> {status, when: ISO instant string}
+  var peopleState = {}; // idx string -> {tz, avail: ["YYYY-MM-DD-H", ...]}
+  var me = null;
+  try { var stored = localStorage.getItem(STORAGE_KEY); if (stored!==null) me = parseInt(stored,10); } catch(e){}
+
+  // ---------- shared database (Supabase) ----------
+  var SUPABASE_URL = "https://brimusnjjrxlmmoocbbb.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_viOoZXMeWHqRn-X5sd0wKw_V7boqj1_";
+  var sb = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+  var edgeEls = {};   // key -> {line,hit}
+  var nodeEls = [];   // idx -> {dot,label,clock,group}
+  var rowEls = {};    // idx -> {pill,date,tz,key}
+
+  function getPair(key){ return pairState[key] || {status:"open"}; }
+  function getPerson(idx){ return peopleState[String(idx)] || {}; }
+
+  // ---------- persistence ----------
+  function persistPair(key, patch){
+    var cur = getPair(key);
+    var next = { status: cur.status || "open", when: cur.when || "" };
+    for (var k in patch) next[k] = patch[k];
+    pairState[key] = next;
+    if (sb){
+      sb.from("pairs").upsert({ key: key, status: next.status, "when": next.when }).then(function(res){
+        if (res.error) document.getElementById("offlineNote").hidden = false;
+      });
+    }
+    applyState();
+  }
+
+  function persistPerson(idx, patch){
+    var cur = getPerson(idx);
+    var next = { tz: cur.tz || "", avail: cur.avail || [] };
+    for (var k in patch) next[k] = patch[k];
+    peopleState[String(idx)] = next;
+    if (sb){
+      sb.from("people").upsert({ idx: String(idx), tz: next.tz, avail: next.avail }).then(function(res){
+        if (res.error) document.getElementById("offlineNote").hidden = false;
+      });
+    }
+    applyState();
+  }
+
+  function nextStatus(s){
+    if (s==="open") return "booked";
+    if (s==="booked") return "done";
+    return "open";
+  }
+
+  function cyclePair(key){
+    var cur = getPair(key);
+    persistPair(key, { status: nextStatus(cur.status || "open") });
+  }
+
+  // ---------- identity ----------
+  function setMe(idx){
+    me = idx;
+    weekOffset = 0;
+    try { localStorage.setItem(STORAGE_KEY, String(idx)); } catch(e){}
+    buildPersonalPanel();
+    applyState();
+  }
+  function switchMe(){
+    me = null;
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+    buildPersonalPanel();
+    applyState();
+  }
+
+  // ---------- graph geometry ----------
+  var CENTER = 280, RADIUS = 205, LABEL_R = 248;
+  function nodePos(idx){
+    var angle = -Math.PI/2 + idx * (2*Math.PI/N);
+    return { x: CENTER + RADIUS*Math.cos(angle), y: CENTER + RADIUS*Math.sin(angle), angle: angle };
+  }
+
+  function svgEl(tag, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function buildGraph(){
+    var svg = document.getElementById("graph");
+    svg.innerHTML = "";
+
+    // edges (draw first, under nodes)
+    pairs.forEach(function(p){
+      var a = nodePos(p.i), b = nodePos(p.j);
+      var line = svgEl("line", {x1:a.x,y1:a.y,x2:b.x,y2:b.y, class:"edge open", "data-key":p.key});
+      var hit = svgEl("line", {x1:a.x,y1:a.y,x2:b.x,y2:b.y, class:"edge-hit", "data-key":p.key});
+      hit.addEventListener("click", function(){ cyclePair(p.key); });
+      var title = svgEl("title", {});
+      title.textContent = NAMES[p.i] + " ↔ " + NAMES[p.j];
+      hit.appendChild(title);
+      svg.appendChild(line);
+      svg.appendChild(hit);
+      edgeEls[p.key] = { line: line };
+    });
+
+    // nodes
+    for (var idx=0; idx<N; idx++){
+      var pos = nodePos(idx);
+      var g = svgEl("g", {});
+      var dot = svgEl("circle", {cx:pos.x, cy:pos.y, r:9, class:"node-dot", fill:"var(--open)"});
+      dot.addEventListener("click", function(ix){ return function(){ setMe(ix); }; }(idx));
+
+      var cosA = Math.cos(pos.angle), sinA = Math.sin(pos.angle);
+      var anchor = cosA > 0.25 ? "start" : (cosA < -0.25 ? "end" : "middle");
+      var lx = CENTER + LABEL_R*cosA, ly = CENTER + LABEL_R*sinA;
+
+      var label = svgEl("text", {x:lx, y:ly, class:"node-label", "text-anchor":anchor, "dominant-baseline":"middle"});
+      label.textContent = NAMES[idx];
+      label.style.cursor = "pointer";
+      label.addEventListener("click", function(ix){ return function(){ setMe(ix); }; }(idx));
+
+      var clock = svgEl("text", {x:lx, y:ly+13, class:"node-clock", "text-anchor":anchor, "dominant-baseline":"middle"});
+
+      g.appendChild(dot); g.appendChild(label); g.appendChild(clock);
+      svg.appendChild(g);
+      nodeEls[idx] = { dot:dot, label:label, clock:clock };
+    }
+  }
+
+  // ---------- date & time-zone math ----------
+  // Availability keys are real calendar dates + a half-hour slot: "YYYY-MM-DD-S"
+  // (S = 0-47, slot 0 = 12:00am-12:30am), always in the owning person's own
+  // local time — matches the 30-minute call length.
+  var DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var SLOTS_PER_DAY = 48;
+  var BROWSER_TZ = (function(){ try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch(e){ return "UTC"; } })();
+  function myTz(){ return (me!==null && getPerson(me).tz) || BROWSER_TZ; }
+
+  function pad2(n){ return (n<10?"0":"")+n; }
+  function dateKey(y,m,d){ return y+"-"+pad2(m)+"-"+pad2(d); }
+  function slotToTime(slot){ return { h: Math.floor(slot/2), min: (slot%2)*30 }; }
+  function slotRange(startH,endH){ var out=[]; for (var s=startH*2; s<endH*2; s++) out.push(s); return out; }
+  // Builds the avail key for a wall-clock time, rounding to the nearest half-hour
+  // and rolling the date over if that pushes past midnight (used after converting
+  // a time between time zones, where the exact minute isn't guaranteed to land
+  // on :00/:30).
+  function slotKeyFromWall(y,m,d,h,min){
+    var slot = Math.round((h*60+min)/30);
+    var dayDelta = 0;
+    if (slot>=SLOTS_PER_DAY){ slot-=SLOTS_PER_DAY; dayDelta=1; }
+    else if (slot<0){ slot+=SLOTS_PER_DAY; dayDelta=-1; }
+    var dt = dayDelta ? addDaysYMD(y,m,d,dayDelta) : {y:y,m:m,d:d};
+    return dateKey(dt.y,dt.m,dt.d) + "-" + slot;
+  }
+
+  function addDaysYMD(y,m,d,delta){
+    var dt = new Date(Date.UTC(y,m-1,d+delta,12,0,0));
+    return { y:dt.getUTCFullYear(), m:dt.getUTCMonth()+1, d:dt.getUTCDate() };
+  }
+  function weekdayMonFirst(y,m,d){
+    return (new Date(Date.UTC(y,m-1,d)).getUTCDay()+6)%7;
+  }
+  function todayYMDInTz(tz){
+    var parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"})
+      .formatToParts(new Date()).reduce(function(acc,p){ if (p.type!=="literal") acc[p.type]=p.value; return acc; },{});
+    return { y:+parts.year, m:+parts.month, d:+parts.day };
+  }
+  // Offset (minutes, east positive) a tz has at a given instant — handles DST correctly
+  // by reading the wall-clock time the zone shows for that instant.
+  function tzOffsetMinutes(tz, instantMs){
+    var parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+      .formatToParts(new Date(instantMs)).reduce(function(acc,p){ if (p.type!=="literal") acc[p.type]=p.value; return acc; },{});
+    var hh = parts.hour==="24" ? 0 : +parts.hour;
+    var asUTC = Date.UTC(+parts.year, +parts.month-1, +parts.day, hh, +parts.minute, +parts.second);
+    return (asUTC - instantMs)/60000;
+  }
+  function wallToUTC(tz,y,m,d,h,min){
+    var guess = Date.UTC(y,m-1,d,h,min,0);
+    return guess - tzOffsetMinutes(tz, guess)*60000;
+  }
+  function utcToWall(tz, instantMs){
+    var local = new Date(instantMs + tzOffsetMinutes(tz, instantMs)*60000);
+    return { y:local.getUTCFullYear(), m:local.getUTCMonth()+1, d:local.getUTCDate(), h:local.getUTCHours(), min:local.getUTCMinutes() };
+  }
+  function isoToLocalInputValue(iso, tz){
+    if (!iso) return "";
+    var instant = new Date(iso).getTime();
+    if (isNaN(instant)) return "";
+    var w = utcToWall(tz, instant);
+    return dateKey(w.y,w.m,w.d) + "T" + pad2(w.h) + ":" + pad2(w.min);
+  }
+  function localInputValueToISO(value, tz){
+    var m = value && value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!m) return "";
+    return new Date(wallToUTC(tz, +m[1], +m[2], +m[3], +m[4], +m[5])).toISOString();
+  }
+  function formatInstant(instant, tz){
+    try { return new Intl.DateTimeFormat("en-US",{timeZone:tz,weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(instant)); }
+    catch(e){ return ""; }
+  }
+
+  // "Add to calendar" links for Google/Outlook/Yahoo's web compose templates —
+  // no file needed, just a prefilled event page.
+  function buildCalendarLinks(instant, meName, theirName){
+    var start = new Date(instant), end = new Date(instant + 30*60000);
+    var title = "1:1: " + meName + " & " + theirName;
+    var details = "Scheduled via Twelve by Eleven.";
+    function basic(d){ return d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}Z$/,"Z"); }
+    function iso(d){ return d.toISOString().replace(/\.\d{3}Z$/,"Z"); }
+    return {
+      google: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(title) +
+        "&dates=" + basic(start) + "/" + basic(end) + "&details=" + encodeURIComponent(details),
+      outlook: "https://outlook.office.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent" +
+        "&subject=" + encodeURIComponent(title) + "&startdt=" + encodeURIComponent(iso(start)) + "&enddt=" + encodeURIComponent(iso(end)) +
+        "&body=" + encodeURIComponent(details),
+      yahoo: "https://calendar.yahoo.com/?v=60&view=d&type=20&title=" + encodeURIComponent(title) +
+        "&st=" + basic(start) + "&et=" + basic(end) + "&desc=" + encodeURIComponent(details)
+    };
+  }
+
+  // ---------- availability grid ----------
+  var availCellEls = {};        // "YYYY-MM-DD-S" -> element
+  var compareIdx = "";          // "" or index string of counterpart being compared
+  var compareCache = null;      // {theirsSet, theirsTz, myTzVal} while a valid comparison is active
+  var availDragging = false, availDragTarget = false, availPending = null;
+  var weekOffset = 0;
+  var MAX_WEEKS_AHEAD = 7;
+
+  function formatHour(h){
+    if (h===0) return "12a";
+    if (h===12) return "12p";
+    return h<12 ? (h+"a") : ((h-12)+"p");
+  }
+  // Only the top of each hour gets a label; the half-hour row stays blank.
+  function formatSlotLabel(slot){
+    return (slot%2===0) ? formatHour(slot/2) : "";
+  }
+
+  function weekDatesForOffset(offset){
+    var tz = myTz();
+    var today = todayYMDInTz(tz);
+    var monday = addDaysYMD(today.y, today.m, today.d, offset*7 - weekdayMonFirst(today.y,today.m,today.d));
+    var dates = [];
+    for (var i=0;i<7;i++) dates.push(addDaysYMD(monday.y,monday.m,monday.d,i));
+    return dates;
+  }
+  function currentWeekDates(){ return weekDatesForOffset(weekOffset); }
+
+  function weekLabelText(dates){
+    var first = dates[0], last = dates[6];
+    var txt = MONTHS[first.m-1]+" "+first.d + (first.m===last.m ? "–"+last.d : "–"+MONTHS[last.m-1]+" "+last.d) + ", " + first.y;
+    return weekOffset===0 ? "This week · "+txt : txt;
+  }
+
+  function cellStateClass(mine, theirs){
+    if (theirs===null) return mine ? "mine" : "none";
+    if (mine && theirs) return "both";
+    if (mine) return "mine-only";
+    if (theirs) return "theirs-only";
+    return "none";
+  }
+
+  function paintCell(key, mine, theirs){
+    var el = availCellEls[key];
+    if (el) el.className = "avail-cell " + cellStateClass(mine, theirs);
+  }
+
+  function updateCompareCache(){
+    var theirs = compareIdx ? getPerson(compareIdx) : null;
+    compareCache = (theirs && theirs.tz) ? { theirsSet: new Set(theirs.avail||[]), theirsTz: theirs.tz, myTzVal: myTz() } : null;
+  }
+  function theirsFreeForKey(key){
+    if (!compareCache) return null;
+    var p = key.split("-"); var y=+p[0], mo=+p[1], d=+p[2], t = slotToTime(+p[3]);
+    var instant = wallToUTC(compareCache.myTzVal, y,mo,d,t.h,t.min);
+    var w = utcToWall(compareCache.theirsTz, instant);
+    return compareCache.theirsSet.has(slotKeyFromWall(w.y,w.m,w.d,w.h,w.min));
+  }
+
+  function repaintAvailGrid(){
+    if (availDragging || me===null) return;
+    updateCompareCache();
+    var mineSet = new Set(getPerson(me).avail || []);
+    for (var key in availCellEls) paintCell(key, mineSet.has(key), theirsFreeForKey(key));
+    renderSuggestions();
+  }
+
+  function updateAvailLegend(){
+    var el = document.getElementById("availLegend");
+    if (!el) return;
+    if (!compareIdx){ el.innerHTML = '<span><i class="mine"></i>You’re free</span>'; return; }
+    var theirs = getPerson(compareIdx);
+    if (!theirs.tz){
+      el.innerHTML = '<span class="avail-note">' + NAMES[compareIdx] + ' hasn’t set a time zone yet, so overlap can’t be shown.</span>';
+      return;
+    }
+    el.innerHTML =
+      '<span><i class="mine"></i>You’re free</span>' +
+      '<span><i class="theirs"></i>' + NAMES[compareIdx] + ' is free</span>' +
+      '<span><i class="both"></i>Both free — good time to book</span>';
+  }
+
+  // Future instants where `me` and `theirIdx` are both marked free. null when
+  // either side hasn't set a time zone yet (nothing to convert against).
+  function overlapInstants(theirIdx){
+    if (me===null) return null;
+    var theirs = getPerson(theirIdx);
+    if (!theirs.tz) return null;
+    var myTzVal = myTz();
+    var mineSet = new Set(getPerson(me).avail || []);
+    var now = Date.now(), out = [];
+    (theirs.avail || []).forEach(function(theirKey){
+      var p = theirKey.split("-"); var y=+p[0], mo=+p[1], d=+p[2], t = slotToTime(+p[3]);
+      var instant = wallToUTC(theirs.tz, y,mo,d,t.h,t.min);
+      if (instant < now) return;
+      var w = utcToWall(myTzVal, instant);
+      if (mineSet.has(slotKeyFromWall(w.y,w.m,w.d,w.h,w.min))) out.push(instant);
+    });
+    out.sort(function(a,b){ return a-b; });
+    return out;
+  }
+
+  function calendarLinksHTML(instant){
+    var links = buildCalendarLinks(instant, NAMES[me], NAMES[compareIdx]);
+    return '<div class="cal-links">Add to calendar: ' +
+      '<a href="' + links.google + '" target="_blank" rel="noopener">Google</a>' +
+      '<a href="' + links.outlook + '" target="_blank" rel="noopener">Outlook</a>' +
+      '<a href="' + links.yahoo + '" target="_blank" rel="noopener">Yahoo</a></div>';
+  }
+
+  function renderSuggestions(){
+    var container = document.getElementById("suggestList");
+    if (!container) return;
+    if (!compareIdx || me===null){ container.hidden = true; container.innerHTML = ""; return; }
+    var theirs = getPerson(compareIdx);
+    if (!theirs.tz){ container.hidden = true; container.innerHTML = ""; return; }
+    var pk = pairKey(me, compareIdx), myTzVal = myTz(), pair = getPair(pk);
+    container.hidden = false;
+
+    // Already booked/done with this person — show the time plus calendar
+    // links instead of more suggestions.
+    if (pair.status==="booked" || pair.status==="done"){
+      var instant = pair.when ? new Date(pair.when).getTime() : NaN;
+      if (isNaN(instant)){
+        container.innerHTML = '<p class="suggest-empty">Marked ' + (pair.status==="done"?"done":"booked") + ', but no time is set — add one in the field next to ' + NAMES[compareIdx] + ' above.</p>';
+        return;
+      }
+      var stateColor = pair.status==="done" ? "var(--done)" : "var(--booked)";
+      container.innerHTML =
+        '<p class="sub" style="margin:0 0 8px;">Your call with ' + NAMES[compareIdx] + '</p>' +
+        '<div class="suggest-item booked-card">' +
+          '<div>' +
+            '<div class="suggest-time" style="color:' + stateColor + ';">✓ ' + (pair.status==="done"?"Done":"Booked") + ' — ' + formatInstant(instant, myTzVal) + '</div>' +
+            '<div class="suggest-their">' + NAMES[compareIdx] + ' sees ' + formatInstant(instant, theirs.tz) + '</div>' +
+            calendarLinksHTML(instant) +
+          '</div>' +
+        '</div>';
+      return;
+    }
+
+    var matches = (overlapInstants(compareIdx) || []).slice(0,8);
+    if (!matches.length){
+      container.innerHTML = '<p class="suggest-empty">No overlapping free hours yet — paint more of both your calendars to find one.</p>';
+      return;
+    }
+    container.innerHTML = '<p class="sub" style="margin:0 0 8px;">Times you’re both free</p>';
+    matches.forEach(function(instant){
+      var item = document.createElement("div");
+      item.className = "suggest-item";
+      var left = document.createElement("div");
+      left.innerHTML = '<div class="suggest-time">' + formatInstant(instant, myTzVal) + '</div>' +
+        '<div class="suggest-their">' + NAMES[compareIdx] + ' sees ' + formatInstant(instant, theirs.tz) + '</div>';
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "Book";
+      btn.addEventListener("click", function(inst){ return function(){
+        persistPair(pk, { status:"booked", when: new Date(inst).toISOString() });
+      }; }(instant));
+      item.appendChild(left); item.appendChild(btn);
+      container.appendChild(item);
+    });
+  }
+
+  function endAvailDrag(){
+    if (!availDragging) return;
+    availDragging = false;
+    if (availPending) persistPerson(me, { avail: Array.from(availPending) });
+    availPending = null;
+  }
+  document.addEventListener("mouseup", endAvailDrag);
+  document.addEventListener("touchend", endAvailDrag);
+  document.addEventListener("touchcancel", endAvailDrag);
+
+  function availCellDown(key){
+    if (me===null) return;
+    availDragging = true;
+    availPending = new Set(getPerson(me).avail || []);
+    availDragTarget = !availPending.has(key);
+    applyPendingToCell(key);
+  }
+  function availCellOver(key){
+    if (!availDragging) return;
+    applyPendingToCell(key);
+  }
+  function applyPendingToCell(key){
+    if (availDragTarget) availPending.add(key); else availPending.delete(key);
+    paintCell(key, availPending.has(key), theirsFreeForKey(key));
+  }
+
+  function cellFromTouch(t){
+    var el = document.elementFromPoint(t.clientX, t.clientY);
+    return el && el.classList && el.classList.contains("avail-cell") ? el.dataset.key : null;
+  }
+
+  function buildAvailGrid(container){
+    container.innerHTML = "";
+    availCellEls = {};
+    var dates = currentWeekDates();
+    var today = todayYMDInTz(myTz());
+    var todayKey = dateKey(today.y,today.m,today.d);
+
+    container.appendChild(document.createElement("div")); // blank corner cell
+    dates.forEach(function(dt,i){
+      var lbl = document.createElement("div");
+      var key = dateKey(dt.y,dt.m,dt.d);
+      lbl.className = "avail-daylabel" + (key===todayKey ? " today" : "");
+      lbl.textContent = DAYS[i] + " " + dt.m + "/" + dt.d;
+      container.appendChild(lbl);
+    });
+    for (var slot=0; slot<SLOTS_PER_DAY; slot++){
+      var hourStart = slot%2===0;
+      var hourLbl = document.createElement("div");
+      hourLbl.className = "avail-hourlabel" + (hourStart ? " hourstart" : "");
+      hourLbl.textContent = formatSlotLabel(slot);
+      container.appendChild(hourLbl);
+      for (var i2=0; i2<7; i2++){
+        var dt2 = dates[i2];
+        var key2 = dateKey(dt2.y,dt2.m,dt2.d) + "-" + slot;
+        var cell = document.createElement("div");
+        cell.className = "avail-cell none";
+        cell.dataset.key = key2;
+        if (hourStart) cell.dataset.hourstart = "1"; // paintCell overwrites className, so the hour-boundary marker lives here instead
+        cell.addEventListener("mousedown", function(k){ return function(e){ e.preventDefault(); availCellDown(k); }; }(key2));
+        cell.addEventListener("mouseenter", function(k){ return function(){ availCellOver(k); }; }(key2));
+        cell.addEventListener("touchstart", function(k){ return function(e){ e.preventDefault(); availCellDown(k); }; }(key2), {passive:false});
+        cell.addEventListener("touchmove", function(e){
+          e.preventDefault();
+          var k = cellFromTouch(e.touches[0]);
+          if (k) availCellOver(k);
+        }, {passive:false});
+        container.appendChild(cell);
+        availCellEls[key2] = cell;
+      }
+    }
+  }
+
+  function refreshWeekNav(){
+    var lbl = document.getElementById("weekLabel");
+    if (lbl) lbl.textContent = weekLabelText(currentWeekDates());
+    var prevBtn = document.getElementById("weekPrev"), nextBtn = document.getElementById("weekNext");
+    if (prevBtn) prevBtn.disabled = weekOffset<=0;
+    if (nextBtn) nextBtn.disabled = weekOffset>=MAX_WEEKS_AHEAD;
+  }
+
+  function changeWeek(delta){
+    var next = weekOffset+delta;
+    if (next<0 || next>MAX_WEEKS_AHEAD || me===null) return;
+    weekOffset = next;
+    buildAvailGrid(document.getElementById("availGrid"));
+    refreshWeekNav();
+    repaintAvailGrid();
+  }
+
+  // ---------- quick fill & repeat ----------
+  var ALL_SLOTS = []; for (var _s=0; _s<SLOTS_PER_DAY; _s++) ALL_SLOTS.push(_s);
+  var PRESETS = {
+    weekdayMornings:   { days:[0,1,2,3,4], slots:slotRange(8,12) },
+    weekdayAfternoons: { days:[0,1,2,3,4], slots:slotRange(13,17) },
+    evenings:          { days:[0,1,2,3,4,5,6], slots:slotRange(18,21) },
+    weekends:          { days:[5,6], slots:slotRange(9,17) }
+  };
+
+  function applyToWeek(dates, days, slots, add){
+    if (me===null) return;
+    var set = new Set(getPerson(me).avail || []);
+    days.forEach(function(dayIdx){
+      var dt = dates[dayIdx];
+      slots.forEach(function(s){
+        var key = dateKey(dt.y,dt.m,dt.d) + "-" + s;
+        if (add) set.add(key); else set.delete(key);
+      });
+    });
+    persistPerson(me, { avail: Array.from(set) });
+  }
+
+  function applyPreset(name){
+    if (me===null) return;
+    var dates = currentWeekDates();
+    if (name==="clear"){ applyToWeek(dates, [0,1,2,3,4,5,6], ALL_SLOTS, false); return; }
+    var def = PRESETS[name];
+    if (def) applyToWeek(dates, def.days, def.slots, true);
+  }
+
+  function repeatWeekForward(){
+    if (me===null) return;
+    var dates = currentWeekDates();
+    var mineSet = new Set(getPerson(me).avail || []);
+    var pattern = [];
+    dates.forEach(function(dt,i){
+      for (var s=0; s<SLOTS_PER_DAY; s++) if (mineSet.has(dateKey(dt.y,dt.m,dt.d)+"-"+s)) pattern.push({dayIdx:i, slot:s});
+    });
+    var fb = document.getElementById("repeatFeedback");
+    if (!pattern.length){
+      if (fb) fb.textContent = "Paint this week first, then repeat it.";
+      return;
+    }
+    var weeksAhead = MAX_WEEKS_AHEAD - weekOffset;
+    if (weeksAhead <= 0){
+      if (fb) fb.textContent = "Already on the last week.";
+      return;
+    }
+    var newSet = new Set(mineSet);
+    for (var w = weekOffset+1; w <= MAX_WEEKS_AHEAD; w++){
+      var wdates = weekDatesForOffset(w);
+      pattern.forEach(function(p){
+        var dt = wdates[p.dayIdx];
+        newSet.add(dateKey(dt.y,dt.m,dt.d)+"-"+p.slot);
+      });
+    }
+    persistPerson(me, { avail: Array.from(newSet) });
+    if (fb){
+      fb.textContent = "✓ Applied to the next " + weeksAhead + " week" + (weeksAhead===1?"":"s") + ".";
+      setTimeout(function(){ if (fb.textContent.indexOf("✓")===0) fb.textContent = ""; }, 4000);
+    }
+  }
+
+  // ---------- first-visit walkthrough ----------
+  var WALKTHROUGH_KEY = "twelveByEleven.hideWalkthrough";
+  var walkthroughDismissed = false;
+  try { walkthroughDismissed = localStorage.getItem(WALKTHROUGH_KEY)==="1"; } catch(e){}
+
+  function renderWalkthrough(){
+    var wrap = document.getElementById("walkthrough");
+    if (!wrap) return;
+    if (me===null || walkthroughDismissed){ wrap.hidden = true; return; }
+    var tzDone = !!getPerson(me).tz;
+    var availDone = (getPerson(me).avail || []).length > 0;
+    var bookedDone = false;
+    for (var oi in rowEls){
+      var st = getPair(rowEls[oi].key).status;
+      if (st==="booked" || st==="done"){ bookedDone = true; break; }
+    }
+    if (tzDone && availDone && bookedDone){ wrap.hidden = true; return; }
+    wrap.hidden = false;
+    var steps = [
+      { done:tzDone, label:"Set your time zone", target:"tzSelect" },
+      { done:availDone, label:"Paint some availability", target:"availGrid" },
+      { done:bookedDone, label:"Compare with someone and book a call", target:"compareSelect" }
+    ];
+    var ol = document.getElementById("walkthroughSteps");
+    ol.innerHTML = "";
+    steps.forEach(function(s){
+      var li = document.createElement("li");
+      li.className = "walkthrough-step" + (s.done ? " done" : "");
+      var mark = document.createElement("span");
+      mark.className = "walkthrough-mark";
+      mark.textContent = s.done ? "✓" : "";
+      var text = document.createElement("span");
+      text.textContent = s.label;
+      li.appendChild(mark); li.appendChild(text);
+      if (!s.done){
+        li.addEventListener("click", function(id){ return function(){
+          var el = document.getElementById(id);
+          if (el){ el.scrollIntoView({behavior:"smooth", block:"center"}); try{ el.focus({preventScroll:true}); }catch(e){} }
+        }; }(s.target));
+      }
+      ol.appendChild(li);
+    });
+  }
+
+  // ---------- personal panel ----------
+  function buildPersonalPanel(){
+    var panel = document.getElementById("personalPanel");
+    rowEls = {};
+    if (me===null){
+      panel.innerHTML =
+        '<h2>Who are you?</h2>' +
+        '<p class="sub">Pick your name to see your own list of 11 calls.</p>' +
+        '<div class="picker"><div class="picker-grid" id="pickerGrid"></div></div>';
+      var grid = document.getElementById("pickerGrid");
+      NAMES.forEach(function(n, idx){
+        var btn = document.createElement("button");
+        btn.textContent = n;
+        btn.addEventListener("click", function(){ setMe(idx); });
+        grid.appendChild(btn);
+      });
+      document.getElementById("availPanel").hidden = true;
+      return;
+    }
+
+    var others = [];
+    for (var i=0;i<N;i++) if (i!==me) others.push(i);
+
+    var html = '' +
+      '<div class="me-head"><span class="me-name">' + NAMES[me] + '</span><button id="switchBtn">not you? switch</button></div>' +
+      '<div class="me-fields">' +
+        '<label>Your time zone<select id="tzSelect"><option value="">Choose…</option>' +
+          TZ_OPTIONS.map(function(t){ return '<option value="'+t[0]+'">'+t[1]+'</option>'; }).join('') +
+        '</select></label>' +
+      '</div>' +
+      '<div class="me-progress" id="meProgress"></div>' +
+      '<ul class="call-list" id="callList"></ul>';
+    panel.innerHTML = html;
+
+    document.getElementById("switchBtn").addEventListener("click", switchMe);
+
+    var tzSelect = document.getElementById("tzSelect");
+    tzSelect.value = getPerson(me).tz || "";
+    tzSelect.addEventListener("change", function(){ persistPerson(me, {tz: tzSelect.value}); });
+
+    var list = document.getElementById("callList");
+    others.forEach(function(idx){
+      var key = pairKey(me, idx);
+      var li = document.createElement("li");
+      li.className = "call-row";
+
+      var nameWrap = document.createElement("div");
+      nameWrap.className = "call-name";
+      var nameSpan = document.createElement("span");
+      nameSpan.textContent = NAMES[idx];
+      var tzSpan = document.createElement("span");
+      tzSpan.className = "call-tz";
+      nameWrap.appendChild(nameSpan);
+      nameWrap.appendChild(tzSpan);
+
+      var badge = document.createElement("button");
+      badge.type = "button";
+      badge.className = "overlap-badge";
+      badge.addEventListener("click", function(ix){ return function(){
+        compareIdx = String(ix);
+        var sel = document.getElementById("compareSelect");
+        if (sel) sel.value = compareIdx;
+        repaintAvailGrid();
+        updateAvailLegend();
+        var panel = document.getElementById("availPanel");
+        if (panel) panel.scrollIntoView({behavior:"smooth", block:"start"});
+      }; }(idx));
+
+      var pill = document.createElement("button");
+      pill.className = "status-pill";
+      pill.addEventListener("click", function(k){ return function(){ cyclePair(k); }; }(key));
+
+      var date = document.createElement("input");
+      date.type = "datetime-local";
+      date.className = "call-date";
+      date.addEventListener("change", function(k){ return function(){
+        var iso = localInputValueToISO(date.value, myTz());
+        var cur = getPair(k);
+        persistPair(k, { when: iso, status: (cur.status==="open" && iso) ? "booked" : cur.status });
+      }; }(key));
+
+      var top = document.createElement("div");
+      top.className = "call-top";
+      top.appendChild(nameWrap);
+      top.appendChild(pill);
+
+      var bottom = document.createElement("div");
+      bottom.className = "call-bottom";
+      bottom.appendChild(badge);
+      bottom.appendChild(date);
+
+      li.appendChild(top);
+      li.appendChild(bottom);
+      list.appendChild(li);
+
+      rowEls[idx] = { pill:pill, date:date, tz:tzSpan, badge:badge, key:key };
+    });
+
+    // weekly availability panel
+    var availPanel = document.getElementById("availPanel");
+    availPanel.hidden = false;
+    var compareSelect = document.getElementById("compareSelect");
+    compareSelect.innerHTML = '<option value="">Just show mine</option>' +
+      others.map(function(idx){ return '<option value="'+idx+'">'+NAMES[idx]+'</option>'; }).join('');
+    compareIdx = "";
+    compareSelect.value = "";
+    buildAvailGrid(document.getElementById("availGrid"));
+    refreshWeekNav();
+    repaintAvailGrid();
+    updateAvailLegend();
+  }
+
+  // ---------- state application (safe to call repeatedly) ----------
+  var STATUS_LABEL = { open:"Not booked", booked:"Booked", done:"Done" };
+
+  function applyState(){
+    // identity bar
+    var bar = document.getElementById("identityBar");
+    if (me===null){
+      bar.innerHTML = '<span>You haven’t picked a name yet.</span>';
+    } else {
+      bar.innerHTML = '<span>Viewing as <strong>'+NAMES[me]+'</strong></span>';
+      var b = document.createElement("button");
+      b.textContent = "switch";
+      b.addEventListener("click", switchMe);
+      bar.appendChild(b);
+    }
+
+    // progress meter + chips
+    var done=0, booked=0, open=0;
+    pairs.forEach(function(p){
+      var s = getPair(p.key).status || "open";
+      if (s==="done") done++; else if (s==="booked") booked++; else open++;
+    });
+    document.getElementById("meterCount").textContent = done + " / " + pairs.length + " done";
+    document.getElementById("fillDone").style.width = (done/pairs.length*100)+"%";
+    document.getElementById("fillBooked").style.width = (booked/pairs.length*100)+"%";
+    document.getElementById("chipOpen").textContent = open;
+    document.getElementById("chipBooked").textContent = booked;
+    document.getElementById("chipDone").textContent = done;
+
+    // graph edges
+    pairs.forEach(function(p){
+      var s = getPair(p.key).status || "open";
+      var el = edgeEls[p.key];
+      if (el) el.line.setAttribute("class", "edge " + s);
+    });
+
+    // node highlight
+    for (var idx=0; idx<N; idx++){
+      var ne = nodeEls[idx];
+      if (!ne) continue;
+      var isMe = idx===me;
+      ne.dot.setAttribute("r", isMe ? 12 : 9);
+      ne.dot.setAttribute("fill", isMe ? "var(--accent)" : "var(--ink-faint)");
+      ne.label.style.fontWeight = isMe ? "700" : "600";
+      ne.label.style.fill = isMe ? "var(--accent)" : "var(--ink)";
+    }
+
+    // personal rows
+    if (me!==null){
+      var tzSelect = document.getElementById("tzSelect");
+      if (tzSelect && document.activeElement!==tzSelect) tzSelect.value = getPerson(me).tz || "";
+
+      var doneCount = 0;
+      for (var oi in rowEls){
+        var row = rowEls[oi];
+        var st = getPair(row.key).status || "open";
+        if (st==="done") doneCount++;
+        row.pill.className = "status-pill " + st;
+        row.pill.textContent = STATUS_LABEL[st];
+        if (document.activeElement !== row.date){
+          row.date.value = isoToLocalInputValue(getPair(row.key).when, myTz());
+        }
+        var theirTz = getPerson(oi).tz;
+        if (!theirTz){
+          row.badge.className = "overlap-badge no-tz";
+          row.badge.textContent = "no time zone yet";
+        } else {
+          var overlapCount = (overlapInstants(oi) || []).length;
+          row.badge.className = "overlap-badge" + (overlapCount ? " has-overlap" : "");
+          row.badge.textContent = overlapCount ? (overlapCount + " time" + (overlapCount===1?"":"s") + " free") : "no overlap yet";
+        }
+      }
+      var mp = document.getElementById("meProgress");
+      if (mp) mp.innerHTML = '<b>'+doneCount+'</b> / 11 done with your calls';
+
+      repaintAvailGrid();
+      updateAvailLegend();
+    }
+
+    renderWalkthrough();
+    updateClocks();
+  }
+
+  function fmtClock(tz){
+    if (!tz) return "";
+    try {
+      var parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz, hour:"numeric", minute:"2-digit", hour12:true, timeZoneName:"shortOffset"
+      }).formatToParts(new Date());
+      var time="", off="";
+      parts.forEach(function(pt){
+        if (pt.type==="hour"||pt.type==="minute"||pt.type==="dayPeriod"||pt.type==="literal") time+=pt.value;
+        if (pt.type==="timeZoneName") off=pt.value;
+      });
+      return time.trim() + " " + off;
+    } catch(e){ return ""; }
+  }
+
+  function updateClocks(){
+    for (var idx=0; idx<N; idx++){
+      var tz = getPerson(idx).tz;
+      var txt = fmtClock(tz);
+      var ne = nodeEls[idx];
+      if (ne) ne.clock.textContent = txt;
+    }
+    for (var oi in rowEls){
+      var row = rowEls[oi];
+      row.tz.textContent = fmtClock(getPerson(oi).tz);
+    }
+  }
+
+  // ---------- boot ----------
+  buildGraph();
+  buildPersonalPanel();
+  applyState();
+  setInterval(updateClocks, 30000);
+
+  document.getElementById("compareSelect").addEventListener("change", function(e){
+    compareIdx = e.target.value;
+    repaintAvailGrid();
+    updateAvailLegend();
+  });
+  document.getElementById("weekPrev").addEventListener("click", function(){ changeWeek(-1); });
+  document.getElementById("weekNext").addEventListener("click", function(){ changeWeek(1); });
+
+  document.getElementById("presetRow").addEventListener("click", function(e){
+    var btn = e.target.closest && e.target.closest("button[data-preset]");
+    if (btn) applyPreset(btn.dataset.preset);
+  });
+  document.getElementById("repeatWeekBtn").addEventListener("click", repeatWeekForward);
+  document.getElementById("walkthroughDismiss").addEventListener("click", function(){
+    walkthroughDismissed = true;
+    try { localStorage.setItem(WALKTHROUGH_KEY, "1"); } catch(e){}
+    renderWalkthrough();
+  });
+
+  // ---------- live sync ----------
+  if (!sb){
+    document.getElementById("offlineNote").hidden = false;
+  } else {
+    Promise.all([
+      sb.from("pairs").select("*"),
+      sb.from("people").select("*")
+    ]).then(function(results){
+      var pairsRes = results[0], peopleRes = results[1];
+      if (pairsRes.error || peopleRes.error){
+        document.getElementById("offlineNote").hidden = false;
+        return;
+      }
+      var nextPairs = {};
+      (pairsRes.data || []).forEach(function(row){
+        nextPairs[row.key] = { status: row.status, when: row.when || "" };
+      });
+      pairState = nextPairs;
+
+      var nextPeople = {};
+      (peopleRes.data || []).forEach(function(row){
+        nextPeople[row.idx] = { tz: row.tz || "", avail: row.avail || [] };
+      });
+      peopleState = nextPeople;
+
+      applyState();
+    }).catch(function(){
+      document.getElementById("offlineNote").hidden = false;
+    });
+
+    sb.channel("pairs-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "pairs" }, function(payload){
+        if (payload.eventType === "DELETE"){
+          delete pairState[payload.old.key];
+        } else {
+          var row = payload.new;
+          pairState[row.key] = { status: row.status, when: row.when || "" };
+        }
+        applyState();
+      })
+      .subscribe();
+
+    sb.channel("people-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "people" }, function(payload){
+        if (payload.eventType === "DELETE"){
+          delete peopleState[payload.old.idx];
+        } else {
+          var row = payload.new;
+          peopleState[row.idx] = { tz: row.tz || "", avail: row.avail || [] };
+        }
+        applyState();
+      })
+      .subscribe();
+  }
+})();
+</script>
+</body>
+</html>
